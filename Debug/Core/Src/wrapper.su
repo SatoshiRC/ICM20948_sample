@@ -1,0 +1,6 @@
+../Core/Inc/ICM20948.h:35:10:uint8_t ICM20948::whoami()	40	static
+../Core/Src/wrapper.cpp:31:6:void init()	8	static
+../Core/Src/wrapper.cpp:37:6:void loop()	4	static
+../Core/Src/wrapper.cpp:39:1:void __static_initialization_and_destruction_0(int, int)	16	static
+../Core/Src/wrapper.cpp:39:1:cpp)	8	static
+../Core/Src/wrapper.cpp:39:1:cpp)	8	static

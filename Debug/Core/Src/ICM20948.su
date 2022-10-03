@@ -1,0 +1,4 @@
+../Core/Inc/ICM20948.h:25:14:constexpr ICM20948::<unnamed struct>::<constructor>()	16	static
+../Core/Src/ICM20948.cpp:10:1:ICM20948::ICM20948()	16	static
+../Core/Src/ICM20948.cpp:15:1:ICM20948::~ICM20948()	16	static
+../Core/Src/ICM20948.cpp:15:1:virtual ICM20948::~ICM20948()	16	static
