@@ -1,6 +1,8 @@
 #include "wrapper.hpp"
 #include "i2c.h"
 #include "ICM20948.h"
+#include "usart.h"
+#include <string>
 
 /* Pre-Processor Begin */
 
@@ -11,15 +13,7 @@
 /* Enum, Struct End */
 
 /* Function Prototype Begin */
-int whoami();
-void pwrmgmt1(int data);
-void pwrmgmt2(int data);
-void reset();
-bool changeuserbank(const uint8_t bank);
-bool accelconfig(const uint8_t fssel,const bool enableDLPF,const uint8_t configDLPF);
-float getaccel( int axis);
-bool gyroconfig(const uint8_t fssel,const bool enableDLPF,const uint8_t configDLPF);
-float getgyro(int axis);
+
 
 
 /* Function Prototype End */
@@ -32,9 +26,41 @@ void init(void){
 	if(icm20948.whoami() == 0xea){
 		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_5,GPIO_PIN_SET);
 	}
+	int result = icm20948.whoami();
+//		    result=whoami();
+		    if(result==0xea){
+//		        printf("ICM20948 confirm\n");
+		    	icm20948.reset();
+		    	icm20948.pwrmgmt2(ICM20948_DISABLE_SENSORS);
+		    	icm20948.accelconfig(ICM20948::AccelSensitivity::SENS_2G,false,0);
+		    	icm20948.pwrmgmt2(ICM20948_ENABLE_SENSORS);
+		        HAL_Delay(100);
+//		        printf("initialized\n");
+
+		        icm20948.changeuserbank(2);
+		        uint8_t buffer2=0;
+		        //HAL_I2C_Mem_Read(&hi2c1, 0x68<<1,ICM20948::REGISTER.ACCEL_CONFIG,1,&buffer2,1,1000);
+		        icm20948.changeuserbank(0);
+		    }
 }
 
 void loop(void){
+	HAL_Delay(50);
+	float accelx = icm20948.getaccel(0);
+	int16_t num = ((int16_t)(accelx*10))/10;
+	std::string str;
+	str = std::to_string(num);
+	num = (uint16_t)(accelx*1000)%1000;
+	str += "."+std::to_string(num)+"\r\n";
+	HAL_UART_Transmit(&huart2, (uint8_t *)str.c_str(), str.size(), 100);
+
+//	           printf("0x%x\n",whoami());
+//	           printf("accel x=%f\t",getaccel(0));
+//	           //printf("I am %x\n",whoami(fd,ICM20948_REG_WHO_AM_I));
+//	           printf("accel y=%f\t",getaccel(1));
+//	           printf("accel z=%f\n",getaccel(2));
+//	           delay(500);
+
 
 }
 

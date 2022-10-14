@@ -19,8 +19,15 @@
 
 class ICM20948 {
 public:
-	ICM20948();
-	virtual ~ICM20948();
+	ICM20948(){};
+	virtual ~ICM20948(){};
+
+	enum class AccelSensitivity: uint8_t{
+		SENS_2G,
+		SENS_4G,
+		SENS_8G,
+		SENS_16G,
+	};
 
 	const struct{
 		uint8_t WHO_AM_I = 0x00;
@@ -36,7 +43,72 @@ public:
 	    uint8_t adress=0;
 		HAL_I2C_Mem_Read(&hi2c1, 0x68<<1, REGISTER.WHO_AM_I, 1, &adress, 1, 1000);
 		return adress;
-	}
-};
 
+	}
+
+	uint8_t pwrmgmt1(uint8_t data){
+	     HAL_I2C_Mem_Write(&hi2c1, 0x68<<1,REGISTER.PWR_MGMT_1,1,&data,1,1000);
+	     return 0;
+	}
+	uint8_t pwrmgmt2(uint8_t data){
+	     HAL_I2C_Mem_Write(&hi2c1, 0x68<<1,REGISTER.PWR_MGMT_2,1,&data,1,1000);
+	     return 0;
+	}
+	void reset(){
+	    pwrmgmt1(ICM20948_BIT_H_RESET);
+	    HAL_Delay(100);
+	    pwrmgmt1(ICM20948_BTT_CLK_PLL);
+	    HAL_Delay(100);
+	    uint8_t buffer=ICM20948_BIT_INT_ACTL | ICM20948_BIT_INT_OPEN;
+	    HAL_I2C_Mem_Write(&hi2c1, 0x68<<1,REGISTER.INT_PIN_CFG,1,&buffer,1,1000);
+		}
+	bool changeuserbank(const uint8_t bank){
+	    if(bank>3 || bank<0){
+	        return false;
+	    }
+	    uint8_t data=bank<<4;
+	    uint8_t res = HAL_I2C_Mem_Write(&hi2c1, 0x68<<1,REGISTER.BANK_SEL,1,&data,1,1000);
+	    //printf("data=0x%02x\n",data);
+	    //printf("res=%d\n",res);
+	    return true;
+	}
+
+	bool accelconfig(const AccelSensitivity fssel,const bool enableDLPF,const uint8_t configDLPF){
+
+	    _accelsensitivity=fssel;
+	    if(configDLPF>7 || configDLPF<0){
+	        return false;
+	    }
+	    uint8_t data=0;
+	    data |=configDLPF<<3;
+	    data |=(uint8_t)fssel<<1;
+	    data |=enableDLPF;
+	    changeuserbank(2);
+
+	    data=HAL_I2C_Mem_Write(&hi2c1, 0x68<<1,REGISTER.ACCEL_CONFIG,1,&data,1,1000);
+	    //printf("data=%d\n",data);
+	    changeuserbank(0);
+	    return true;
+
+	}
+	float getaccel(uint8_t axis){
+	    const uint8_t REG_ACCEL_H[3]={0x2D,0x2F,0x31};
+	    const uint8_t REG_ACCEL_L[3]={0x2E,0x30,0x32};
+
+	    int8_t accelH;
+		HAL_I2C_Mem_Read(&hi2c1, 0x68<<1,REG_ACCEL_H[axis],1,(uint8_t*)&accelH,1,1000);
+	    int8_t accelL;
+	    HAL_I2C_Mem_Read(&hi2c1, 0x68<<1,REG_ACCEL_L[axis],1,(uint8_t*)&accelL,1,1000);
+	    int16_t accel=(int16_t)accelH<<8 | (int16_t)accelL;
+
+	    return (float)accel/ACCEL_SENSITIVITY[(uint8_t)_accelsensitivity];
+	}
+
+private:
+	AccelSensitivity _accelsensitivity;
+	const float ACCEL_SENSITIVITY[4]={16384.0,8192.0,4096.0,2048.0};
+	const float GYRO_SENSITIVITY[4]={131,65.5,32.8,16.4};
+
+
+};
 #endif /* INC_ICM20948_H_ */
