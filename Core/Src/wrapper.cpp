@@ -20,7 +20,7 @@
 /* Function Prototype End */
 
 /* Variable Begin */
-ICM20948 icm20948;
+ICM20948 icm20948(&hi2c1,ICM20948::Address::LOW);
 float anglez=0;
 uint64_t timer=0;
 uint16_t preCounter=0;
@@ -40,18 +40,18 @@ void init(void){
 //		        printf("ICM20948 confirm\n");
 		    	icm20948.reset();
 		    	icm20948.pwrmgmt2(ICM20948_DISABLE_SENSORS);
-		    	icm20948.accelconfig(ICM20948::AccelSensitivity::SENS_2G,false,0);
+		    	icm20948.accelConfig(ICM20948::AccelSensitivity::SENS_2G,false,0);
 		    	icm20948.pwrmgmt2(ICM20948_ENABLE_SENSORS);
-		    	icm20948.pinconfig(0b01110000);
+		    	icm20948.intPinConfig(0b01110000);
 		    	icm20948.intenable();
 
 		        HAL_Delay(100);
 //		        printf("initialized\n");
 
-		        icm20948.changeuserbank(2);
+		        icm20948.changeUserBank(2);
 		        uint8_t buffer2=0;
 		        //HAL_I2C_Mem_Read(&hi2c1, 0x68<<1,ICM20948::REGISTER.ACCEL_CONFIG,1,&buffer2,1,1000);
-		        icm20948.changeuserbank(0);
+		        icm20948.changeUserBank(0);
 		    }
 
 
@@ -116,7 +116,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 		}
 
 //		float gyroz = icm20948.getgyro(0);
-		gyroz = icm20948.getgyro(0);
+		gyroz = icm20948.getGyro(0);
 
 		anglez+=gyroz*stepTime/1000000.0;
 

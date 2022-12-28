@@ -1,0 +1,11 @@
+../Core/Src/ICM20948.cpp:19:9:uint8_t ICM20948::whoami()	40	static
+../Core/Src/ICM20948.cpp:26:10:uint8_t ICM20948::pwrmgmt1(uint8_t)	32	static
+../Core/Src/ICM20948.cpp:30:10:uint8_t ICM20948::pwrmgmt2(uint8_t)	32	static
+../Core/Src/ICM20948.cpp:34:7:void ICM20948::reset()	40	static
+../Core/Src/ICM20948.cpp:42:7:bool ICM20948::changeUserBank(uint8_t)	40	static
+../Core/Src/ICM20948.cpp:53:7:bool ICM20948::accelConfig(ICM20948::AccelSensitivity, bool, uint8_t)	40	static
+../Core/Src/ICM20948.cpp:71:7:bool ICM20948::gyroConfig(ICM20948::GyroSensitivity, bool, uint8_t)	40	static
+../Core/Src/ICM20948.cpp:88:8:float ICM20948::getAccel(uint8_t)	48	static
+../Core/Src/ICM20948.cpp:101:8:float ICM20948::getGyro(uint8_t)	48	static
+../Core/Src/ICM20948.cpp:114:7:void ICM20948::intPinConfig(uint8_t)	32	static
+../Core/Src/ICM20948.cpp:119:7:void ICM20948::intenable(uint8_t)	32	static
