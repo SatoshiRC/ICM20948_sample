@@ -1,23 +1,26 @@
-../Core/Inc/ICM20948.h:32:14:constexpr ICM20948::<unnamed struct>::<constructor>()	16	static
+../Core/Inc/ICM20948.h:39:14:constexpr ICM20948::<unnamed struct>::<constructor>()	16	static
 ../Core/Inc/ICM20948.h:22:2:ICM20948::ICM20948()	24	static
 ../Core/Inc/ICM20948.h:23:10:ICM20948::~ICM20948()	16	static
 ../Core/Inc/ICM20948.h:23:10:virtual ICM20948::~ICM20948()	16	static
-../Core/Inc/ICM20948.h:42:10:uint8_t ICM20948::whoami()	40	static
-../Core/Inc/ICM20948.h:49:10:uint8_t ICM20948::pwrmgmt1(uint8_t)	32	static
-../Core/Inc/ICM20948.h:53:10:uint8_t ICM20948::pwrmgmt2(uint8_t)	32	static
-../Core/Inc/ICM20948.h:57:7:void ICM20948::reset()	40	static
-../Core/Inc/ICM20948.h:65:7:bool ICM20948::changeuserbank(uint8_t)	40	static
-../Core/Inc/ICM20948.h:76:7:bool ICM20948::accelconfig(ICM20948::AccelSensitivity, bool, uint8_t)	40	static
-../Core/Inc/ICM20948.h:94:8:float ICM20948::getaccel(uint8_t)	48	static
+../Core/Inc/ICM20948.h:51:10:uint8_t ICM20948::whoami()	40	static
+../Core/Inc/ICM20948.h:58:10:uint8_t ICM20948::pwrmgmt1(uint8_t)	32	static
+../Core/Inc/ICM20948.h:62:10:uint8_t ICM20948::pwrmgmt2(uint8_t)	32	static
+../Core/Inc/ICM20948.h:66:7:void ICM20948::reset()	40	static
+../Core/Inc/ICM20948.h:74:7:bool ICM20948::changeuserbank(uint8_t)	40	static
+../Core/Inc/ICM20948.h:85:7:bool ICM20948::accelconfig(ICM20948::AccelSensitivity, bool, uint8_t)	40	static
+../Core/Inc/ICM20948.h:133:8:float ICM20948::getgyro(uint8_t)	48	static
+../Core/Inc/ICM20948.h:146:7:void ICM20948::pinconfig(uint8_t)	32	static
+../Core/Inc/ICM20948.h:151:7:void ICM20948::intenable(uint8_t)	32	static
 c:\st\stm32cubeide_1.10.1\stm32cubeide\plugins\com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.10.3-2021.10.win32_1.0.0.202111181127\tools\bin\../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/include/c++/10.3.1/arm-none-eabi/thumb/v7e-m+fp/hard/bits/gthr-default.h:229:1:int __gthread_key_delete(__gthread_key_t)	16	static
 c:\st\stm32cubeide_1.10.1\stm32cubeide\plugins\com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.10.3-2021.10.win32_1.0.0.202111181127\tools\arm-none-eabi\include\c++\10.3.1\bits\basic_string.h:6609:3:std::string std::__cxx11::to_string(int)	40	static
-../Core/Src/wrapper.cpp:25:6:void init()	16	static
-../Core/Src/wrapper.cpp:47:6:void loop()	144	static
+../Core/Src/wrapper.cpp:32:6:void init()	16	static
+../Core/Src/wrapper.cpp:60:6:void loop()	4	static
+../Core/Src/wrapper.cpp:93:6:void HAL_GPIO_EXTI_Callback(uint16_t)	200	static
 c:\st\stm32cubeide_1.10.1\stm32cubeide\plugins\com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.10.3-2021.10.win32_1.0.0.202111181127\tools\arm-none-eabi\include\c++\10.3.1\bits\charconv.h:47:5:constexpr unsigned int std::__detail::__to_chars_len(_Tp, int) [with _Tp = unsigned int]	32	static
 c:\st\stm32cubeide_1.10.1\stm32cubeide\plugins\com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.10.3-2021.10.win32_1.0.0.202111181127\tools\arm-none-eabi\include\c++\10.3.1\bits\charconv.h:72:5:void std::__detail::__to_chars_10_impl(char*, unsigned int, _Tp) [with _Tp = unsigned int]	40	static
 c:\st\stm32cubeide_1.10.1\stm32cubeide\plugins\com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.10.3-2021.10.win32_1.0.0.202111181127\tools\arm-none-eabi\include\c++\10.3.1\bits\basic_string.h:6143:5:std::__cxx11::basic_string<_CharT, _Traits, _Alloc> std::operator+(const _CharT*, std::__cxx11::basic_string<_CharT, _Traits, _Alloc>&&) [with _CharT = char; _Traits = std::char_traits<char>; _Alloc = std::allocator<char>]	24	static
 c:\st\stm32cubeide_1.10.1\stm32cubeide\plugins\com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.10.3-2021.10.win32_1.0.0.202111181127\tools\arm-none-eabi\include\c++\10.3.1\bits\basic_string.h:6155:5:std::__cxx11::basic_string<_CharT, _Traits, _Alloc> std::operator+(std::__cxx11::basic_string<_CharT, _Traits, _Alloc>&&, const _CharT*) [with _CharT = char; _Traits = std::char_traits<char>; _Alloc = std::allocator<char>]	24	static
 c:\st\stm32cubeide_1.10.1\stm32cubeide\plugins\com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.10.3-2021.10.win32_1.0.0.202111181127\tools\arm-none-eabi\include\c++\10.3.1\bits\move.h:101:5:constexpr typename std::remove_reference<_Tp>::type&& std::move(_Tp&&) [with _Tp = std::__cxx11::basic_string<char>&]	16	static
-../Core/Src/wrapper.cpp:65:1:void __static_initialization_and_destruction_0(int, int)	16	static
-../Core/Src/wrapper.cpp:65:1:cpp)	8	static
-../Core/Src/wrapper.cpp:65:1:cpp)	8	static
+../Core/Src/wrapper.cpp:140:1:void __static_initialization_and_destruction_0(int, int)	16	static
+../Core/Src/wrapper.cpp:140:1:cpp)	8	static
+../Core/Src/wrapper.cpp:140:1:cpp)	8	static

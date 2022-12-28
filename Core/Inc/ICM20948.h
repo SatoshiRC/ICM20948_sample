@@ -29,6 +29,13 @@ public:
 		SENS_16G,
 	};
 
+	enum class GyroSensitivity: uint8_t{
+		SENS_2G,
+		SENS_4G,
+		SENS_8G,
+		SENS_16G,
+	};
+
 	const struct{
 		uint8_t WHO_AM_I = 0x00;
 		uint8_t PWR_MGMT_1 = 0x06;
@@ -37,6 +44,8 @@ public:
 		uint8_t BANK_SEL = 0x7F;
 		uint8_t ACCEL_CONFIG = 0x14;
 		uint8_t GYRO_CONFIG = 0x01;
+		uint8_t INT_ENABLE = 0x11;
+
 	}REGISTER;
 
 	uint8_t whoami(){
@@ -91,6 +100,23 @@ public:
 	    return true;
 
 	}
+	bool gyroconfig(const GyroSensitivity fssel,const bool enableDLPF,const uint8_t configDLPF){
+
+		_gyrosensitivity=fssel;
+		if(configDLPF>7||configDLPF<0){
+			return false;
+		}
+		uint8_t data=0;
+		data |=configDLPF<<3;
+		data |=(uint8_t)fssel<<1;
+		data |=enableDLPF;
+		changeuserbank(2);
+
+		data=HAL_I2C_Mem_Write(&hi2c1,0x68<<1,REGISTER.GYRO_CONFIG,1,&data,1,1000);
+		changeuserbank(0);
+		return true;
+
+	}
 	float getaccel(uint8_t axis){
 	    const uint8_t REG_ACCEL_H[3]={0x2D,0x2F,0x31};
 	    const uint8_t REG_ACCEL_L[3]={0x2E,0x30,0x32};
@@ -104,8 +130,32 @@ public:
 	    return (float)accel/ACCEL_SENSITIVITY[(uint8_t)_accelsensitivity];
 	}
 
+	float getgyro(uint8_t axis){
+		const uint8_t REG_GYRO_H[3]={0x33,0x35,0x37};
+		const uint8_t REG_GYRO_L[3]={0x34,0x36,0x38};
+
+		int8_t gyroH;
+		HAL_I2C_Mem_Read(&hi2c1,0x68<<1,REG_GYRO_H[axis],1,(uint8_t*)&gyroH,1,1000);
+		int8_t gyroL;
+		HAL_I2C_Mem_Read(&hi2c1,0x68<<1,REG_GYRO_L[axis],1,(uint8_t*)&gyroL,1,1000);
+		int16_t gyro=(int16_t)gyroH<<8 | (int16_t)gyroL;
+
+		return (float)gyro/GYRO_SENSITIVITY[(uint8_t)_gyrosensitivity];
+	}
+
+	void pinconfig(uint8_t value){
+		HAL_I2C_Mem_Write(&hi2c1,0x68<<1,REGISTER.INT_PIN_CFG,1,&value,1,1000);
+
+	}
+
+	void intenable(uint8_t value=1){
+		HAL_I2C_Mem_Write(&hi2c1,0x68<<1,REGISTER.INT_ENABLE,1,&value,1,1000);
+	}
+
+
 private:
 	AccelSensitivity _accelsensitivity;
+	GyroSensitivity _gyrosensitivity;
 	const float ACCEL_SENSITIVITY[4]={16384.0,8192.0,4096.0,2048.0};
 	const float GYRO_SENSITIVITY[4]={131,65.5,32.8,16.4};
 
