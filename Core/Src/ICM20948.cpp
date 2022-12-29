@@ -18,7 +18,7 @@
 
 uint8_t ICM20948::whoami(){
 	    uint8_t adress=0;
-		HAL_I2C_Mem_Read(hi2c, (uint16_t)address, REGISTER.WHO_AM_I, 1, &adress, 1, 1000);
+		HAL_I2C_Mem_Read(hi2c, (uint16_t)address<<1, REGISTER.WHO_AM_I, 1, &adress, 1, 1000);
 		return adress;
 
 	}

@@ -4,13 +4,17 @@
 #include "usart.h"
 #include <string>
 #include "tim.h"
+#include "TIM_stopwatch/TIMStopWatch.h"
+#include <array>
+#include <cmath>
 
 /* Pre-Processor Begin */
 
 /* Pre-Processor End */
 
 /* Enum, Struct Begin */
-
+//typedef std::array<float,4> quaternion;
+typedef float quaternion[4];
 /* Enum, Struct End */
 
 /* Function Prototype Begin */
@@ -22,17 +26,27 @@
 /* Variable Begin */
 ICM20948 icm20948(&hi2c1,ICM20948::Address::LOW);
 float anglez=0;
-uint64_t timer=0;
-uint16_t preCounter=0;
-uint16_t counter=0;
-uint16_t stepTime = 0;
+int timer=0;
+float preTime=0;
+float time=0;
+float stepTime = 0;
+TIM_StopWatch stopwatch(&htim1);
 
+std::array<float,3> accelValue;
+//std::array<float,3> gyroValue;
+float gyroValue[3]={};
+quaternion preAttitude={1};
+quaternion attitude={1};
+
+float roll;
+float pitch;
+float yaw;
 /* Variable End */
 
 void init(void){
-    HAL_TIM_Base_Start(&htim1);
+   stopwatch.start();
 	if(icm20948.whoami() == 0xea){
-//		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_5,GPIO_PIN_SET);
+		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_5,GPIO_PIN_SET);
 	}
 	int result = icm20948.whoami();
 //		    result=whoami();
@@ -58,67 +72,75 @@ void init(void){
 }
 
 void loop(void){
-//	HAL_Delay(50);
-//	{
-//	float accelx = icm20948.getaccel(0);
-//	int16_t num = ((int16_t)(accelx*10))/10;
-//	std::string str;
-//	str = std::to_string(num);
-//	num = (uint16_t)(accelx*1000)%1000;
-//	str += "."+std::to_string(num)+"\r\n";
-//	HAL_UART_Transmit(&huart2, (uint8_t *)str.c_str(), str.size(), 100);
-//	}
-//	float gyrox = icm20948.getgyro(0);
-//	int16_t num = ((int16_t)(gyrox*10))/10;
-//	std::string str;
-//	str = std::to_string(num);
-//	num = (uint16_t)(gyrox*1000)%1000;
-//	str += "."+std::to_string(num)+"\r\n";
-//	HAL_UART_Transmit(&huart2, (uint8_t *)str.c_str(), str.size(), 100);
-
-//	           printf("0x%x\n",whoami());
-//	           printf("accel x=%f\t",getaccel(0));
-//	           //printf("I am %x\n",whoami(fd,ICM20948_REG_WHO_AM_I));
-//	           printf("accel y=%f\t",getaccel(1));
-//	           printf("accel z=%f\n",getaccel(2));
-//	           delay(500);
-
-//	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_11));
-//	HAL_GPIO_WritePin(GPIOA,GPIO_PIN_5,GPIO_PIN_SET);
-
+stopwatch.update();
 }
 
-float gyroz;
+
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 //	HAL_GPIO_WritePin(GPIOA,GPIO_PIN_5,GPIO_PIN_SET);
 	if (GPIO_Pin == GPIO_PIN_11){
-		stepTime = 0;
-		{uint8_t flag=__HAL_TIM_GET_FLAG(&htim1,TIM_FLAG_UPDATE);
-		  counter=__HAL_TIM_GET_COUNTER(&htim1);
-		  if(flag==0){
-			  stepTime=counter-preCounter;
-		  }else{
-			  stepTime=counter+__HAL_TIM_GET_AUTORELOAD(&htim1)-preCounter;
-			  __HAL_TIM_CLEAR_FLAG(&htim1,TIM_FLAG_UPDATE);
-		  }
-		  preCounter=counter;
-		  timer+=stepTime;
-		}
-		{
-//			float accelx = icm20948.getaccel(0);
-//			int16_t num = ((int16_t)(accelx*10))/10;
-//			std::string str;
-//			str = std::to_string(num);
-//			num = (uint16_t)(accelx*1000)%1000;
-//			str += "."+std::to_string(num)+"\r\n";
-//			HAL_UART_Transmit(&huart2, (uint8_t *)str.c_str(), str.size(), 100);
-		}
+		timer++;
+		preTime=time;
+		stopwatch.update();
+		time=stopwatch.getTimeMS();
+		stepTime=time-preTime;
 
+//		float accelx = icm20948.getaccel(0);
 //		float gyroz = icm20948.getgyro(0);
-		gyroz = icm20948.getGyro(0);
+		for(uint8_t n=0;n<3;n++){
+			gyroValue[n] = icm20948.getGyro(n)*M_PI/180;
+			accelValue[n] = icm20948.getAccel(n);
+		}
+		quaternion qDotOmega;
 
-		anglez+=gyroz*stepTime/1000000.0;
+		 qDotOmega[0]=1/2.0*(-preAttitude[1]*gyroValue[0]-preAttitude[2]*gyroValue[1]-preAttitude[3]*gyroValue[2]);
+		 qDotOmega[1]=1/2.0*(preAttitude[0]*gyroValue[0]+preAttitude[2]*gyroValue[2]-preAttitude[3]*gyroValue[1]);
+		 qDotOmega[2]=1/2.0*(preAttitude[0]*gyroValue[1]-preAttitude[1]*gyroValue[2]+preAttitude[3]*gyroValue[0]);
+		 qDotOmega[3]=1/2.0*(preAttitude[0]*gyroValue[2]+preAttitude[1]*gyroValue[1]-preAttitude[2]*gyroValue[0]);
+
+		 std::array<float,3> f;
+		 f[0]=2*(preAttitude[1]*preAttitude[3]-preAttitude[0]*preAttitude[2])-accelValue[0];
+		 f[1]=2*(preAttitude[0]*preAttitude[1]+preAttitude[2]*preAttitude[3]-accelValue[1]);
+		 f[2]=2*(1/2.0-std::pow(preAttitude[1],2)-std::pow(preAttitude[2],2))-accelValue[2];
+
+		 std::array<std::array<float,3>,4> j;
+				j[0]= {-2*preAttitude[2], 2*preAttitude[1],0};
+				j[1]=  {2*preAttitude[3],2*preAttitude[0],-4*preAttitude[1]};
+				j[2]=  {-2*preAttitude[0],2*preAttitude[3],-4*preAttitude[2]};
+				j[3]=  {2*preAttitude[1],2*preAttitude[2],0};
+
+		 quaternion qDotEpsilon={};
+		 for(uint8_t n=0;n<4;n++){
+			 for(uint8_t m=0;m<3;m++){
+				 qDotEpsilon[n]+= j[n][m]*f[m];
+			 }
+		 }
+
+		 float fSize=std::sqrt(std::pow(qDotEpsilon[0],2)+std::pow(qDotEpsilon[1],2)+std::pow(qDotEpsilon[2],2)+std::pow(qDotEpsilon[3],2));
+
+
+
+		 quaternion qDot;
+		 float beta=std::sqrt(3/4.0)*M_PI*(5.0/180.0);
+//		 float beta=0;
+		 for(uint8_t n=0;n<4;n++){
+		 qDot[n]=qDotOmega[n]-beta*qDotEpsilon[n]/fSize;
+		 preAttitude[n]=attitude[n];
+		 attitude[n]=preAttitude[n]+qDot[n]*stepTime/1000;
+		 }
+
+		 roll=std::atan2(2*(attitude[0]*attitude[1]+attitude[2]*attitude[3]) ,std::pow(attitude[0],2)-std::pow(attitude[1],2)-std::pow(attitude[2],2)+std::pow(attitude[3],2));
+
+		 pitch=std::asin(2*(attitude[0]*attitude[2]-attitude[1]*attitude[3]));
+
+		 yaw=std::atan2(2*(attitude[0]*attitude[3]+attitude[1]*attitude[2])
+			 ,std::pow(attitude[0],2)+std::pow(attitude[1],2)-std::pow(attitude[2],2)-std::pow(attitude[3],2));
+
+
+
+
+
 
 //		int16_t num = ((int16_t)(anglez*10))/10;
 		int16_t num = stepTime;

@@ -1,0 +1,3 @@
+[submodule "subModule/TIM_stopwatch"]
+	path = subModule/TIM_stopwatch
+	url = https://gitlab.com/nokolat/Library/tim_stopwatch.git
