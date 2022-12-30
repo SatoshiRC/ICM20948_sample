@@ -33,8 +33,7 @@ float stepTime = 0;
 TIM_StopWatch stopwatch(&htim1);
 
 std::array<float,3> accelValue;
-//std::array<float,3> gyroValue;
-float gyroValue[3]={};
+std::array<float,3> gyroValue;
 quaternion preAttitude={1};
 quaternion attitude={1};
 
@@ -80,84 +79,67 @@ stopwatch.update();
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 //	HAL_GPIO_WritePin(GPIOA,GPIO_PIN_5,GPIO_PIN_SET);
 	if (GPIO_Pin == GPIO_PIN_11){
-		timer++;
+
+		//following variables are used for madgwick filter
+		quaternion qDotOmega;
+		std::array<float,3> f;
+		std::array<std::array<float,3>,4> j;
+		quaternion qDotEpsilon={};
+		float fSize;
+		quaternion qDot;
+		const float beta=std::sqrt(3/4.0)*M_PI*(5.0/180.0);
+
+
 		preTime=time;
 		stopwatch.update();
 		time=stopwatch.getTimeMS();
 		stepTime=time-preTime;
 
-//		float accelx = icm20948.getaccel(0);
-//		float gyroz = icm20948.getgyro(0);
-		for(uint8_t n=0;n<3;n++){
-			gyroValue[n] = icm20948.getGyro(n)*M_PI/180;
-			accelValue[n] = icm20948.getAccel(n);
-		}
-		quaternion qDotOmega;
+		icm20948.get6ValueBurst(accelValue, gyroValue);
 
-		 qDotOmega[0]=1/2.0*(-preAttitude[1]*gyroValue[0]-preAttitude[2]*gyroValue[1]-preAttitude[3]*gyroValue[2]);
-		 qDotOmega[1]=1/2.0*(preAttitude[0]*gyroValue[0]+preAttitude[2]*gyroValue[2]-preAttitude[3]*gyroValue[1]);
-		 qDotOmega[2]=1/2.0*(preAttitude[0]*gyroValue[1]-preAttitude[1]*gyroValue[2]+preAttitude[3]*gyroValue[0]);
-		 qDotOmega[3]=1/2.0*(preAttitude[0]*gyroValue[2]+preAttitude[1]*gyroValue[1]-preAttitude[2]*gyroValue[0]);
+		qDotOmega[0]=1/2.0*(-preAttitude[1]*gyroValue[0]-preAttitude[2]*gyroValue[1]-preAttitude[3]*gyroValue[2]);
+		qDotOmega[1]=1/2.0*(preAttitude[0]*gyroValue[0]+preAttitude[2]*gyroValue[2]-preAttitude[3]*gyroValue[1]);
+		qDotOmega[2]=1/2.0*(preAttitude[0]*gyroValue[1]-preAttitude[1]*gyroValue[2]+preAttitude[3]*gyroValue[0]);
+		qDotOmega[3]=1/2.0*(preAttitude[0]*gyroValue[2]+preAttitude[1]*gyroValue[1]-preAttitude[2]*gyroValue[0]);
 
-		 std::array<float,3> f;
-		 f[0]=2*(preAttitude[1]*preAttitude[3]-preAttitude[0]*preAttitude[2])-accelValue[0];
-		 f[1]=2*(preAttitude[0]*preAttitude[1]+preAttitude[2]*preAttitude[3]-accelValue[1]);
-		 f[2]=2*(1/2.0-std::pow(preAttitude[1],2)-std::pow(preAttitude[2],2))-accelValue[2];
+		f[0]=2*(preAttitude[1]*preAttitude[3]-preAttitude[0]*preAttitude[2])-accelValue[0];
+		f[1]=2*(preAttitude[0]*preAttitude[1]+preAttitude[2]*preAttitude[3]-accelValue[1]);
+		f[2]=2*(1/2.0-std::pow(preAttitude[1],2)-std::pow(preAttitude[2],2))-accelValue[2];
 
-		 std::array<std::array<float,3>,4> j;
-				j[0]= {-2*preAttitude[2], 2*preAttitude[1],0};
-				j[1]=  {2*preAttitude[3],2*preAttitude[0],-4*preAttitude[1]};
-				j[2]=  {-2*preAttitude[0],2*preAttitude[3],-4*preAttitude[2]};
-				j[3]=  {2*preAttitude[1],2*preAttitude[2],0};
+		j[0]= {-2*preAttitude[2], 2*preAttitude[1],0};
+		j[1]=  {2*preAttitude[3],2*preAttitude[0],-4*preAttitude[1]};
+		j[2]=  {-2*preAttitude[0],2*preAttitude[3],-4*preAttitude[2]};
+		j[3]=  {2*preAttitude[1],2*preAttitude[2],0};
 
-		 quaternion qDotEpsilon={};
 		 for(uint8_t n=0;n<4;n++){
 			 for(uint8_t m=0;m<3;m++){
 				 qDotEpsilon[n]+= j[n][m]*f[m];
 			 }
 		 }
 
-		 float fSize=std::sqrt(std::pow(qDotEpsilon[0],2)+std::pow(qDotEpsilon[1],2)+std::pow(qDotEpsilon[2],2)+std::pow(qDotEpsilon[3],2));
+		 fSize=std::sqrt(std::pow(qDotEpsilon[0],2)+std::pow(qDotEpsilon[1],2)+std::pow(qDotEpsilon[2],2)+std::pow(qDotEpsilon[3],2));
 
-
-
-		 quaternion qDot;
-		 float beta=std::sqrt(3/4.0)*M_PI*(5.0/180.0);
-//		 float beta=0;
 		 for(uint8_t n=0;n<4;n++){
-		 qDot[n]=qDotOmega[n]-beta*qDotEpsilon[n]/fSize;
-		 preAttitude[n]=attitude[n];
-		 attitude[n]=preAttitude[n]+qDot[n]*stepTime/1000;
+			 qDot[n]=qDotOmega[n]-beta*qDotEpsilon[n]/fSize;
+			 preAttitude[n]=attitude[n];
+			 attitude[n]=preAttitude[n]+qDot[n]*stepTime/1000;
 		 }
 
-		 roll=std::atan2(2*(attitude[0]*attitude[1]+attitude[2]*attitude[3]) ,std::pow(attitude[0],2)-std::pow(attitude[1],2)-std::pow(attitude[2],2)+std::pow(attitude[3],2));
+		 roll=std::atan2(2*(attitude[0]*attitude[1]+attitude[2]*attitude[3])
+			 ,std::pow(attitude[0],2)-std::pow(attitude[1],2)-std::pow(attitude[2],2)+std::pow(attitude[3],2));
 
 		 pitch=std::asin(2*(attitude[0]*attitude[2]-attitude[1]*attitude[3]));
 
 		 yaw=std::atan2(2*(attitude[0]*attitude[3]+attitude[1]*attitude[2])
 			 ,std::pow(attitude[0],2)+std::pow(attitude[1],2)-std::pow(attitude[2],2)-std::pow(attitude[3],2));
 
-
-
-
-
-
-//		int16_t num = ((int16_t)(anglez*10))/10;
-		int16_t num = stepTime;
-		std::string str;
-		str = std::to_string(num);
-		num = (uint16_t)(anglez*1000)%1000;
-		str += "."+std::to_string(num)+"\r\n";
-		HAL_UART_Transmit(&huart2, (uint8_t *)str.c_str(), str.size(), 100);
 		HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
 		uint8_t n=0;
-		n=0;
-//		HAL_I2C_Mem_Write(&hi2c1, 0x68<<1, 0x1A, 1, &n, 1, 100);
 		HAL_I2C_Mem_Read(&hi2c1, 0x68<<1, 0x1a, 1, &n, 1, 100);
 		HAL_I2C_Mem_Read(&hi2c1, 0x68<<1, 0x11, 1, &n, 1, 100);
-				str = std::to_string(n);
-				str += "\r\n";
-				HAL_UART_Transmit(&huart2, (uint8_t *)str.c_str(), str.size(), 100);
+		str = std::to_string(n);
+		str += "\r\n";
+		HAL_UART_Transmit(&huart2, (uint8_t *)str.c_str(), str.size(), 100);
 	}
 }
 

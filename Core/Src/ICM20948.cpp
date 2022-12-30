@@ -111,6 +111,42 @@ uint8_t ICM20948::whoami(){
 		return (float)gyro/GYRO_SENSITIVITY[(uint8_t)_gyrosensitivity];
 	}
 
+	void ICM20948::getAccelBurst(std::array<float,3> &value){
+		const uint8_t headRegAddr = 0x2d;
+		uint8_t buffer[6]={};
+
+		HAL_I2C_Mem_Read(hi2c, (uint16_t)address<<1,headRegAddr,1,(uint8_t*)buffer,6,1000);
+
+		for(uint8_t n=0;n<3;n++){
+			value[n] = (float)((int16_t)buffer[2*n]<<8 | (int16_t)buffer[2*n+1])/ACCEL_SENSITIVITY[(uint8_t)_accelsensitivity];
+		}
+	}
+
+	void ICM20948::getGyroBurst(std::array<float,3> &value){
+		const uint8_t headRegAddr = 0x33;
+		uint8_t buffer[6]={};
+
+		HAL_I2C_Mem_Read(hi2c, (uint16_t)address<<1,headRegAddr,1,(uint8_t*)buffer,6,1000);
+
+		for(uint8_t n=0;n<3;n++){
+			value[n] = (float)((int16_t)buffer[2*n]<<8 | (int16_t)buffer[2*n+1])/GYRO_SENSITIVITY[(uint8_t)_accelsensitivity];
+		}
+	}
+
+	void get6ValueBurst(std::array<float,3> &accel, std::array<float,3> &gyro){
+		const uint8_t headRegAddr = 0x2d;
+		uint8_t buffer[12]={};
+
+		HAL_I2C_Mem_Read(hi2c, (uint16_t)address<<1,headRegAddr,1,(uint8_t*)buffer,12,1000);
+
+		for(uint8_t n=0;n<3;n++){
+			accel[n] = (float)((int16_t)buffer[2*n]<<8 | (int16_t)buffer[2*n+1])/ACCEL_SENSITIVITY[(uint8_t)_accelsensitivity];
+		}
+		for(uint8_t n=0;n<3;n++){
+			gyro[n] = (float)((int16_t)buffer[2*n+6]<<8 | (int16_t)buffer[2*n+1+6])/GYRO_SENSITIVITY[(uint8_t)_accelsensitivity];
+		}
+	}
+
 	void ICM20948::intPinConfig(uint8_t value){
 		HAL_I2C_Mem_Write(hi2c,(uint16_t)address<<1,REGISTER.INT_PIN_CFG,1,&value,1,1000);
 
