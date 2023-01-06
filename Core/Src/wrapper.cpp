@@ -40,6 +40,15 @@ quaternion attitude={1};
 float roll;
 float pitch;
 float yaw;
+
+quaternion qDotOmega={};
+std::array<float,3> f;
+std::array<std::array<float,3>,4> j;
+quaternion qDotEpsilon={};
+float fSize=0;
+quaternion qDot;
+const float beta=std::sqrt(3/4.0)*M_PI*(5.0/180.0);
+
 /* Variable End */
 
 void init(void){
@@ -54,6 +63,7 @@ void init(void){
 		    	icm20948.reset();
 		    	icm20948.pwrmgmt2(ICM20948_DISABLE_SENSORS);
 		    	icm20948.accelConfig(ICM20948::AccelSensitivity::SENS_2G,false,0);
+		    	icm20948.gyroConfig(ICM20948::GyroSensitivity::SENS_500, false, 0);
 		    	icm20948.pwrmgmt2(ICM20948_ENABLE_SENSORS);
 		    	icm20948.intPinConfig(0b01110000);
 		    	icm20948.intenable();
@@ -74,20 +84,20 @@ void loop(void){
 stopwatch.update();
 }
 
-
+float gyro;
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 //	HAL_GPIO_WritePin(GPIOA,GPIO_PIN_5,GPIO_PIN_SET);
 	if (GPIO_Pin == GPIO_PIN_11){
 
 		//following variables are used for madgwick filter
-		quaternion qDotOmega;
-		std::array<float,3> f;
-		std::array<std::array<float,3>,4> j;
-		quaternion qDotEpsilon={};
-		float fSize;
-		quaternion qDot;
-		const float beta=std::sqrt(3/4.0)*M_PI*(5.0/180.0);
+//		quaternion qDotOmega={};
+//		std::array<float,3> f;
+//		std::array<std::array<float,3>,4> j;
+//		quaternion qDotEpsilon={};
+//		float fSize=0;
+//		quaternion qDot;
+//		const float beta=std::sqrt(3/4.0)*M_PI*(5.0/180.0);
 
 
 		preTime=time;
@@ -96,6 +106,14 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 		stepTime=time-preTime;
 
 		icm20948.get6ValueBurst(accelValue, gyroValue);
+		float accelSize=std::sqrt(std::pow(accelValue[0],2)+std::pow(accelValue[1],2)+std::pow(accelValue[2],2));
+		if(accelSize!=0){
+		accelValue[0]/=accelSize;
+		accelValue[1]/=accelSize;
+		accelValue[2]/=accelSize;
+		}
+
+		gyro=accelValue[0];
 
 		qDotOmega[0]=1/2.0*(-preAttitude[1]*gyroValue[0]-preAttitude[2]*gyroValue[1]-preAttitude[3]*gyroValue[2]);
 		qDotOmega[1]=1/2.0*(preAttitude[0]*gyroValue[0]+preAttitude[2]*gyroValue[2]-preAttitude[3]*gyroValue[1]);
@@ -106,12 +124,13 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 		f[1]=2*(preAttitude[0]*preAttitude[1]+preAttitude[2]*preAttitude[3]-accelValue[1]);
 		f[2]=2*(1/2.0-std::pow(preAttitude[1],2)-std::pow(preAttitude[2],2))-accelValue[2];
 
-		j[0]= {-2*preAttitude[2], 2*preAttitude[1],0};
+		j[0]=  {-2*preAttitude[2], 2*preAttitude[1],0};
 		j[1]=  {2*preAttitude[3],2*preAttitude[0],-4*preAttitude[1]};
 		j[2]=  {-2*preAttitude[0],2*preAttitude[3],-4*preAttitude[2]};
 		j[3]=  {2*preAttitude[1],2*preAttitude[2],0};
 
 		 for(uint8_t n=0;n<4;n++){
+			 qDotEpsilon[n]=0;
 			 for(uint8_t m=0;m<3;m++){
 				 qDotEpsilon[n]+= j[n][m]*f[m];
 			 }
@@ -120,10 +139,22 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 		 fSize=std::sqrt(std::pow(qDotEpsilon[0],2)+std::pow(qDotEpsilon[1],2)+std::pow(qDotEpsilon[2],2)+std::pow(qDotEpsilon[3],2));
 
 		 for(uint8_t n=0;n<4;n++){
-			 qDot[n]=qDotOmega[n]-beta*qDotEpsilon[n]/fSize;
+			 if(fSize==0){
+				 qDot[n]=qDotOmega[n];
+			 }else{
+				 qDot[n]=qDotOmega[n]-beta*qDotEpsilon[n]/fSize;
+			 }
+
+			 attitude[n]=preAttitude[n]+qDot[n]*stepTime/1000.0;
 			 preAttitude[n]=attitude[n];
-			 attitude[n]=preAttitude[n]+qDot[n]*stepTime/1000;
 		 }
+
+
+		 float attitudeSize=std::sqrt(std::pow(attitude[0],2)+std::pow(attitude[1],2)+std::pow(attitude[2],2)+std::pow(attitude[3],2));
+		 attitude[0]/=attitudeSize;
+		 attitude[1]/=attitudeSize;
+		 attitude[2]/=attitudeSize;
+		 attitude[3]/=attitudeSize;
 
 		 roll=std::atan2(2*(attitude[0]*attitude[1]+attitude[2]*attitude[3])
 			 ,std::pow(attitude[0],2)-std::pow(attitude[1],2)-std::pow(attitude[2],2)+std::pow(attitude[3],2));
@@ -137,9 +168,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 		uint8_t n=0;
 		HAL_I2C_Mem_Read(&hi2c1, 0x68<<1, 0x1a, 1, &n, 1, 100);
 		HAL_I2C_Mem_Read(&hi2c1, 0x68<<1, 0x11, 1, &n, 1, 100);
-		str = std::to_string(n);
-		str += "\r\n";
-		HAL_UART_Transmit(&huart2, (uint8_t *)str.c_str(), str.size(), 100);
+//		str = std::to_string(n);
+//		str += "\r\n";
+//		HAL_UART_Transmit(&huart2, (uint8_t *)str.c_str(), str.size(), 100);
 	}
 }
 

@@ -29,10 +29,10 @@ public:
 	};
 
 	enum class GyroSensitivity: uint8_t{
-		SENS_2G,
-		SENS_4G,
-		SENS_8G,
-		SENS_16G,
+		SENS_250,
+		SENS_500,
+		SENS_1000,
+		SENS_2000,
 	};
 
 	const struct{
