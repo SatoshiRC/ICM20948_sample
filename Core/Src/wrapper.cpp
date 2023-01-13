@@ -49,6 +49,10 @@ float fSize=0;
 quaternion qDot;
 const float beta=std::sqrt(3/4.0)*M_PI*(5.0/180.0);
 
+float gyroX;
+float gyroY;
+float gyroZ;
+
 /* Variable End */
 
 void init(void){
@@ -113,7 +117,12 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 		accelValue[2]/=accelSize;
 		}
 
-		gyro=accelValue[0];
+		for(auto& it:gyroValue){
+			it *= M_PI/180.0;
+		}
+		gyroX=gyroValue[0];
+		gyroY=gyroValue[1];
+		gyroZ=gyroValue[2];
 
 		qDotOmega[0]=1/2.0*(-preAttitude[1]*gyroValue[0]-preAttitude[2]*gyroValue[1]-preAttitude[3]*gyroValue[2]);
 		qDotOmega[1]=1/2.0*(preAttitude[0]*gyroValue[0]+preAttitude[2]*gyroValue[2]-preAttitude[3]*gyroValue[1]);
