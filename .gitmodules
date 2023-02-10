@@ -1,3 +1,6 @@
 [submodule "subModule/TIM_stopwatch"]
 	path = subModule/TIM_stopwatch
 	url = https://gitlab.com/nokolat/Library/tim_stopwatch.git
+[submodule "subModule/ICM20948"]
+	path = subModule/ICM20948
+	url = https://github.com/NOKOLat/ICM20948.git
