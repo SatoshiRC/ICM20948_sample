@@ -1,6 +1,6 @@
+#include "ICM20948/ICM20948_USER.h"
 #include "wrapper.hpp"
 #include "i2c.h"
-#include "ICM20948.h"
 #include "usart.h"
 #include <string>
 #include "tim.h"
@@ -24,7 +24,7 @@ typedef float quaternion[4];
 /* Function Prototype End */
 
 /* Variable Begin */
-ICM20948 icm20948(&hi2c1,ICM20948::Address::LOW);
+ICM20948_USER icm20948(&hi2c1,ICM20948::Address::LOW);
 float anglez=0;
 int timer=0;
 float preTime=0;
@@ -57,31 +57,7 @@ float gyroZ;
 
 void init(void){
    stopwatch.start();
-	if(icm20948.whoami() == 0xea){
-		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_5,GPIO_PIN_SET);
-	}
-	int result = icm20948.whoami();
-//		    result=whoami();
-		    if(result==0xea){
-//		        printf("ICM20948 confirm\n");
-		    	icm20948.reset();
-		    	icm20948.pwrmgmt2(ICM20948_DISABLE_SENSORS);
-		    	icm20948.accelConfig(ICM20948::AccelSensitivity::SENS_2G,false,0);
-		    	icm20948.gyroConfig(ICM20948::GyroSensitivity::SENS_500, false, 0);
-		    	icm20948.pwrmgmt2(ICM20948_ENABLE_SENSORS);
-		    	icm20948.intPinConfig(0b01110000);
-		    	icm20948.intenable();
-
-		        HAL_Delay(100);
-//		        printf("initialized\n");
-
-		        icm20948.changeUserBank(2);
-		        uint8_t buffer2=0;
-		        //HAL_I2C_Mem_Read(&hi2c1, 0x68<<1,ICM20948::REGISTER.ACCEL_CONFIG,1,&buffer2,1,1000);
-		        icm20948.changeUserBank(0);
-		    }
-
-
+   icm20948.init();
 }
 
 void loop(void){
@@ -177,9 +153,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 		uint8_t n=0;
 		HAL_I2C_Mem_Read(&hi2c1, 0x68<<1, 0x1a, 1, &n, 1, 100);
 		HAL_I2C_Mem_Read(&hi2c1, 0x68<<1, 0x11, 1, &n, 1, 100);
-//		str = std::to_string(n);
-//		str += "\r\n";
-//		HAL_UART_Transmit(&huart2, (uint8_t *)str.c_str(), str.size(), 100);
 	}
 }
 
