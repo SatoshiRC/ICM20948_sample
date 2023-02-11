@@ -10,3 +10,6 @@
 [submodule "subModule/Madgwick"]
 	path = subModule/Madgwick
 	url = https://github.com/NOKOLat/Madgwick.git
+[submodule "subModule/Quaternion"]
+	path = subModule/Quaternion
+	url = https://github.com/NOKOLat/Quaternion.git
