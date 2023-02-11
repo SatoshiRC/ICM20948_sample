@@ -7,3 +7,6 @@
 [submodule "subModule/I2C_DMA_Handler"]
 	path = subModule/I2C_DMA_Handler
 	url = https://github.com/NOKOLat/I2C_DMA_Handler.git
+[submodule "subModule/Magdwick"]
+	path = subModule/Magdwick
+	url = https://github.com/NOKOLat/Magdwick.git
