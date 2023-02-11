@@ -4,3 +4,6 @@
 [submodule "subModule/ICM20948"]
 	path = subModule/ICM20948
 	url = https://github.com/NOKOLat/ICM20948.git
+[submodule "subModule/I2C_DMA_Handler"]
+	path = subModule/I2C_DMA_Handler
+	url = https://github.com/NOKOLat/I2C_DMA_Handler.git
